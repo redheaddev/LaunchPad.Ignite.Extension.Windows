@@ -1,0 +1,59 @@
+{
+  "id": "launchpad-windows",
+  "name": "LaunchPad Windows",
+  "namespace": "windows",
+  "version": "1.0.2",
+  "assembly": "LaunchPad.Ignite.Extension.Windows.dll",
+  "schema": {
+    "lists": [],
+    "functions": [
+      {
+        "name": "apps",
+        "parameters": [],
+        "returnType": "list",
+        "matchMode": "contains",
+        "timeoutSeconds": 10
+      }
+    ],
+    "commands": [
+      {
+        "name": "app",
+        "kind": "windows",
+        "description": "Search and launch an app from the Start Menu",
+        "actions": [
+          {
+            "name": "default",
+            "description": "Launch a Start Menu app",
+            "usage": "windows:app <app>",
+            "targetTemplate": "app",
+            "arguments": [
+              { "name": "app", "listFunction": "@windows:apps()", "listMode": "single" }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "settings",
+        "kind": "windows",
+        "description": "Open Windows Settings",
+        "actions": [
+          { "name": "default", "description": "Open Windows Settings", "usage": "windows:settings", "targetTemplate": "settings", "arguments": [] },
+          { "name": "display", "description": "Open Display settings", "usage": "windows:settings display", "targetTemplate": "display", "arguments": [] },
+          { "name": "sound", "description": "Open Sound settings", "usage": "windows:settings sound", "targetTemplate": "sound", "arguments": [] },
+          { "name": "network", "description": "Open Network settings", "usage": "windows:settings network", "targetTemplate": "network", "arguments": [] },
+          { "name": "personalization", "description": "Open Personalization settings", "usage": "windows:settings personalization", "targetTemplate": "personalization", "arguments": [] },
+          { "name": "apps", "description": "Open Installed apps settings", "usage": "windows:settings apps", "targetTemplate": "apps", "arguments": [] },
+          { "name": "update", "description": "Open Windows Update settings", "usage": "windows:settings update", "targetTemplate": "update", "arguments": [] }
+        ]
+      },
+      {
+        "name": "task-manager",
+        "kind": "windows",
+        "description": "Open Task Manager",
+        "actions": [
+          { "name": "default", "description": "Open Task Manager", "usage": "windows:task-manager", "targetTemplate": "task-manager", "arguments": [] }
+        ]
+      }
+    ]
+  }
+}

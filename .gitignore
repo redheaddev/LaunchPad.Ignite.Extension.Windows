@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET build and publish output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Aa]rtifacts/
+[Pp]ublish/
+
+# Test output
+[Tt]est[Rr]esults/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/packages/
+
+# IDE and temporary files
+.vscode/
+*.rsuser
+*.log
+*.tmp
