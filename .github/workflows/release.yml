@@ -1,0 +1,114 @@
+name: Release Windows Extension
+run-name: Windows ${{ github.ref_type == 'tag' && github.ref_name || inputs.version || 'manual build' }}
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional numeric major.minor.patch package version
+        required: false
+        type: string
+      core_ref:
+        description: Optional LaunchPad.Ignite Core branch, tag, or commit
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out the tagged extension
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: LaunchPad.Ignite.Extension.Windows
+          persist-credentials: false
+
+      - name: Check out LaunchPad.Ignite.Core
+        uses: actions/checkout@v4
+        with:
+          repository: redheaddev/LaunchPad.Ignite
+          ref: ${{ inputs.core_ref || vars.CORE_REF || 'main' }}
+          path: LaunchPad.Ignite
+          persist-credentials: false
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve package version
+        id: version
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          REQUESTED_VERSION: ${{ inputs.version || '' }}
+        run: |
+          if ($env:EVENT_NAME -eq 'push' -and $env:REF_TYPE -eq 'tag') {
+            if ($env:REF_NAME -notmatch '^v\d+\.\d+\.\d+$') {
+              throw "Release tag '$env:REF_NAME' must use vMAJOR.MINOR.PATCH format."
+            }
+            $version = $env:REF_NAME.Substring(1)
+          }
+          elseif (-not [string]::IsNullOrWhiteSpace($env:REQUESTED_VERSION)) {
+            $version = $env:REQUESTED_VERSION
+          }
+          else {
+            $manifestPath = 'LaunchPad.Ignite.Extension.Windows/extension.json'
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $version = [string]$manifest.version
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Package version '$version' must use numeric major.minor.patch format."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "## Windows extension package`n`nPackage version: **$version**" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Build extension ZIP
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          & 'LaunchPad.Ignite.Extension.Windows/scripts/Publish-Extension.ps1' -Version $env:PACKAGE_VERSION
+
+      - name: Upload Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: launchpad-windows-${{ steps.version.outputs.version }}
+          path: LaunchPad.Ignite.Extension.Windows/artifacts/launchpad-windows-${{ steps.version.outputs.version }}.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the extension ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: launchpad-windows-${{ needs.build.outputs.version }}
+          path: release-assets
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: redheaddev/LaunchPad.Ignite.Extension.Windows
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        run: gh release create "$RELEASE_TAG" "release-assets/launchpad-windows-$RELEASE_VERSION.zip" --repo "$REPOSITORY" --title "LaunchPad Windows Extension $RELEASE_VERSION" --generate-notes --verify-tag
