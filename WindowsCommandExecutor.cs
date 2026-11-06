@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using LaunchPad.Ignite.Core.Execution;
 using LaunchPad.Ignite.Core.Parsing;
@@ -155,17 +156,56 @@ public sealed class StartMenuAppCatalog
 
 public sealed class WindowsCommandExecutor : ICommandExecutor, IExtensionListFunctionExecutor
 {
-    private static readonly IReadOnlyDictionary<string, (string Target, string Description)> Targets =
-        new Dictionary<string, (string Target, string Description)>(StringComparer.OrdinalIgnoreCase)
+    private sealed record WindowsCommandTarget(string Executable, string Description, string? Arguments = null);
+
+    [DllImport("powrprof.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern byte SetSuspendState(byte hibernate, byte forceCritical, byte disableWakeEvent);
+
+    private static readonly IReadOnlyDictionary<string, WindowsCommandTarget> Targets =
+        new Dictionary<string, WindowsCommandTarget>(StringComparer.OrdinalIgnoreCase)
         {
-            ["settings"] = ("ms-settings:", "Windows Settings"),
-            ["display"] = ("ms-settings:display", "Display settings"),
-            ["sound"] = ("ms-settings:sound", "Sound settings"),
-            ["network"] = ("ms-settings:network", "Network settings"),
-            ["personalization"] = ("ms-settings:personalization", "Personalization settings"),
-            ["apps"] = ("ms-settings:appsfeatures", "Installed apps settings"),
-            ["update"] = ("ms-settings:windowsupdate", "Windows Update settings"),
-            ["task-manager"] = ("taskmgr.exe", "Task Manager")
+            ["settings"] = new("ms-settings:", "Windows Settings"),
+            ["display"] = new("ms-settings:display", "Display settings"),
+            ["sound"] = new("ms-settings:sound", "Sound settings"),
+            ["network"] = new("ms-settings:network", "Network settings"),
+            ["personalization"] = new("ms-settings:personalization", "Personalization settings"),
+            ["apps"] = new("ms-settings:appsfeatures", "Installed apps settings"),
+            ["update"] = new("ms-settings:windowsupdate", "Windows Update settings"),
+            ["network-status"] = new("ms-settings:network-status", "Network status"),
+            ["network-wifi"] = new("ms-settings:network-wifi", "Wi-Fi settings"),
+            ["network-ethernet"] = new("ms-settings:network-ethernet", "Ethernet settings"),
+            ["network-bluetooth"] = new("ms-settings:bluetooth", "Bluetooth settings"),
+            ["network-adapters"] = new("ncpa.cpl", "Network Connections"),
+            ["network-vpn"] = new("ms-settings:network-vpn", "VPN settings"),
+            ["task-manager"] = new("taskmgr.exe", "Task Manager"),
+            ["control-panel"] = new("control.exe", "Control Panel"),
+            ["control-panel-programs"] = new("appwiz.cpl", "Programs and Features"),
+            ["control-panel-network"] = new("ncpa.cpl", "Network Connections"),
+            ["control-panel-sound"] = new("mmsys.cpl", "Sound Control Panel"),
+            ["control-panel-system"] = new("sysdm.cpl", "System Properties"),
+            ["control-panel-environment"] = new("rundll32.exe", "Environment Variables", "sysdm.cpl,EditEnvironmentVariables"),
+            ["explorer-home"] = new("explorer.exe", "File Explorer"),
+            ["explorer-downloads"] = new("explorer.exe", "Downloads", "shell:Downloads"),
+            ["explorer-documents"] = new("explorer.exe", "Documents", "shell:Personal"),
+            ["explorer-this-pc"] = new("explorer.exe", "This PC", "shell:MyComputerFolder"),
+            ["explorer-recycle-bin"] = new("explorer.exe", "Recycle Bin", "shell:RecycleBinFolder"),
+            ["tool-computer-management"] = new("compmgmt.msc", "Computer Management"),
+            ["tool-device-manager"] = new("devmgmt.msc", "Device Manager"),
+            ["tool-event-viewer"] = new("eventvwr.msc", "Event Viewer"),
+            ["tool-services"] = new("services.msc", "Services"),
+            ["tool-disk-management"] = new("diskmgmt.msc", "Disk Management"),
+            ["tool-resource-monitor"] = new("resmon.exe", "Resource Monitor"),
+            ["utility-calculator"] = new("calc.exe", "Calculator"),
+            ["utility-run"] = new("explorer.exe", "Run dialog", "shell:::{2559a1f3-21d7-11d4-bdaf-00c04f60b9f0}"),
+            ["utility-terminal"] = new("wt.exe", "Windows Terminal"),
+            ["utility-character-map"] = new("charmap.exe", "Character Map"),
+            ["utility-magnifier"] = new("magnify.exe", "Magnifier"),
+            ["utility-snipping-tool"] = new("SnippingTool.exe", "Snipping Tool"),
+            ["utility-notepad"] = new("notepad.exe", "Notepad"),
+            ["power-lock"] = new("rundll32.exe", "Lock workstation", "user32.dll,LockWorkStation"),
+            ["power-restart"] = new("shutdown.exe", "Restart", "/r /t 0"),
+            ["power-shutdown"] = new("shutdown.exe", "Shut down", "/s /t 0"),
+            ["power-sign-out"] = new("shutdown.exe", "Sign out", "/l")
         };
 
     private readonly StartMenuAppCatalog _appCatalog;
@@ -208,6 +248,32 @@ public sealed class WindowsCommandExecutor : ICommandExecutor, IExtensionListFun
             return LaunchApp(command);
         }
 
+        if (string.Equals(command.Action.TargetTemplate, "power-sleep", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(command.Action.TargetTemplate, "power-hibernate", StringComparison.OrdinalIgnoreCase))
+        {
+            var hibernate = string.Equals(command.Action.TargetTemplate, "power-hibernate", StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                if (SetSuspendState(hibernate ? (byte)1 : (byte)0, 0, 0) == 0)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+
+                return new CommandExecutionResult(true, hibernate ? "Hibernating." : "Entering sleep.");
+            }
+            catch (Exception exception) when (exception is Win32Exception or DllNotFoundException or EntryPointNotFoundException)
+            {
+                return new CommandExecutionResult(false, $"Unable to {(hibernate ? "hibernate" : "sleep")}: {exception.Message}");
+            }
+        }
+
+        if (command.Action.TargetTemplate is "power-restart" or "power-shutdown" or "power-sign-out"
+            && (!command.Arguments.TryGetValue("confirm", out var confirmation)
+                || !string.Equals(confirmation, "confirm", StringComparison.OrdinalIgnoreCase)))
+        {
+            return new CommandExecutionResult(false, "Type 'confirm' to authorize this power action.");
+        }
+
         if (!Targets.TryGetValue(command.Action.TargetTemplate, out var target))
         {
             return new CommandExecutionResult(false, "The requested Windows action is not supported.");
@@ -215,7 +281,13 @@ public sealed class WindowsCommandExecutor : ICommandExecutor, IExtensionListFun
 
         try
         {
-            Process.Start(new ProcessStartInfo(target.Target) { UseShellExecute = true });
+            var startInfo = new ProcessStartInfo(target.Executable) { UseShellExecute = true };
+            if (target.Arguments is not null)
+            {
+                startInfo.Arguments = target.Arguments;
+            }
+
+            Process.Start(startInfo);
             return new CommandExecutionResult(true, $"Opened {target.Description}.");
         }
         catch (Exception exception) when (exception is Win32Exception or InvalidOperationException)

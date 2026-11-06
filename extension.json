@@ -2,7 +2,7 @@
   "id": "launchpad-windows",
   "name": "LaunchPad Windows",
   "namespace": "windows",
-  "version": "1.0.2",
+  "version": "1.0.11",
   "assembly": "LaunchPad.Ignite.Extension.Windows.dll",
   "schema": {
     "lists": [],
@@ -47,11 +47,97 @@
         ]
       },
       {
+        "name": "network",
+        "kind": "windows",
+        "description": "Open network and connectivity settings",
+        "actions": [
+          { "name": "default", "description": "Open Network status", "usage": "windows:network", "targetTemplate": "network-status", "arguments": [] },
+          { "name": "wifi", "description": "Open Wi-Fi settings", "usage": "windows:network wifi", "targetTemplate": "network-wifi", "arguments": [] },
+          { "name": "ethernet", "description": "Open Ethernet settings", "usage": "windows:network ethernet", "targetTemplate": "network-ethernet", "arguments": [] },
+          { "name": "bluetooth", "description": "Open Bluetooth settings", "usage": "windows:network bluetooth", "targetTemplate": "network-bluetooth", "arguments": [] },
+          { "name": "adapters", "description": "Open Network Connections", "usage": "windows:network adapters", "targetTemplate": "network-adapters", "arguments": [] },
+          { "name": "vpn", "description": "Open VPN settings", "usage": "windows:network vpn", "targetTemplate": "network-vpn", "arguments": [] }
+        ]
+      },
+      {
         "name": "task-manager",
         "kind": "windows",
         "description": "Open Task Manager",
         "actions": [
           { "name": "default", "description": "Open Task Manager", "usage": "windows:task-manager", "targetTemplate": "task-manager", "arguments": [] }
+        ]
+      },
+      {
+        "name": "control-panel",
+        "kind": "windows",
+        "description": "Open Control Panel or a classic applet",
+        "actions": [
+          { "name": "default", "description": "Open Control Panel", "usage": "windows:control-panel", "targetTemplate": "control-panel", "arguments": [] },
+          { "name": "programs", "description": "Open Programs and Features", "usage": "windows:control-panel programs", "targetTemplate": "control-panel-programs", "arguments": [] },
+          { "name": "network", "description": "Open Network Connections", "usage": "windows:control-panel network", "targetTemplate": "control-panel-network", "arguments": [] },
+          { "name": "sound", "description": "Open Sound Control Panel", "usage": "windows:control-panel sound", "targetTemplate": "control-panel-sound", "arguments": [] },
+          { "name": "system", "description": "Open System Properties", "usage": "windows:control-panel system", "targetTemplate": "control-panel-system", "arguments": [] },
+          { "name": "environment", "description": "Open Environment Variables", "usage": "windows:control-panel environment", "targetTemplate": "control-panel-environment", "arguments": [] }
+        ]
+      },
+      {
+        "name": "explorer",
+        "kind": "windows",
+        "description": "Open a common Windows location in File Explorer",
+        "actions": [
+          { "name": "default", "description": "Open File Explorer", "usage": "windows:explorer", "targetTemplate": "explorer-home", "arguments": [] },
+          { "name": "downloads", "description": "Open Downloads", "usage": "windows:explorer downloads", "targetTemplate": "explorer-downloads", "arguments": [] },
+          { "name": "documents", "description": "Open Documents", "usage": "windows:explorer documents", "targetTemplate": "explorer-documents", "arguments": [] },
+          { "name": "this-pc", "description": "Open This PC", "usage": "windows:explorer this-pc", "targetTemplate": "explorer-this-pc", "arguments": [] },
+          { "name": "recycle-bin", "description": "Open Recycle Bin", "usage": "windows:explorer recycle-bin", "targetTemplate": "explorer-recycle-bin", "arguments": [] }
+        ]
+      },
+      {
+        "name": "tools",
+        "kind": "windows",
+        "description": "Open a Windows system tool",
+        "actions": [
+          { "name": "default", "description": "Open Computer Management", "usage": "windows:tools", "targetTemplate": "tool-computer-management", "arguments": [] },
+          { "name": "device-manager", "description": "Open Device Manager", "usage": "windows:tools device-manager", "targetTemplate": "tool-device-manager", "arguments": [] },
+          { "name": "event-viewer", "description": "Open Event Viewer", "usage": "windows:tools event-viewer", "targetTemplate": "tool-event-viewer", "arguments": [] },
+          { "name": "services", "description": "Open Services", "usage": "windows:tools services", "targetTemplate": "tool-services", "arguments": [] },
+          { "name": "disk-management", "description": "Open Disk Management", "usage": "windows:tools disk-management", "targetTemplate": "tool-disk-management", "arguments": [] },
+          { "name": "resource-monitor", "description": "Open Resource Monitor", "usage": "windows:tools resource-monitor", "targetTemplate": "tool-resource-monitor", "arguments": [] }
+        ]
+      },
+      {
+        "name": "utilities",
+        "kind": "windows",
+        "description": "Open common Windows utilities",
+        "actions": [
+          { "name": "default", "description": "Open Calculator", "usage": "windows:utilities", "targetTemplate": "utility-calculator", "arguments": [] },
+          { "name": "calculator", "description": "Open Calculator", "usage": "windows:utilities calculator", "targetTemplate": "utility-calculator", "arguments": [] },
+          { "name": "run", "description": "Open the Run dialog", "usage": "windows:utilities run", "targetTemplate": "utility-run", "arguments": [] },
+          { "name": "terminal", "description": "Open Windows Terminal", "usage": "windows:utilities terminal", "targetTemplate": "utility-terminal", "arguments": [] },
+          { "name": "character-map", "description": "Open Character Map", "usage": "windows:utilities character-map", "targetTemplate": "utility-character-map", "arguments": [] },
+          { "name": "magnifier", "description": "Open Magnifier", "usage": "windows:utilities magnifier", "targetTemplate": "utility-magnifier", "arguments": [] },
+          { "name": "snipping-tool", "description": "Open Snipping Tool", "usage": "windows:utilities snipping-tool", "targetTemplate": "utility-snipping-tool", "arguments": [] },
+          { "name": "notepad", "description": "Open Notepad", "usage": "windows:utilities notepad", "targetTemplate": "utility-notepad", "arguments": [] }
+        ]
+      },
+      {
+        "name": "lock",
+        "kind": "windows",
+        "description": "Lock the workstation",
+        "actions": [
+          { "name": "default", "description": "Lock the workstation", "usage": "windows:lock", "targetTemplate": "power-lock", "arguments": [] }
+        ]
+      },
+      {
+        "name": "power",
+        "kind": "windows",
+        "description": "Sleep, hibernate, restart, shut down, or sign out",
+        "actions": [
+          { "name": "sleep", "description": "Sleep the computer", "usage": "windows:power sleep", "targetTemplate": "power-sleep", "arguments": [] },
+          { "name": "hibernate", "description": "Hibernate the computer", "usage": "windows:power hibernate", "targetTemplate": "power-hibernate", "arguments": [] },
+          { "name": "restart", "description": "Restart the computer", "usage": "windows:power restart confirm", "targetTemplate": "power-restart", "arguments": [{ "name": "confirm" }], "confirmationPrompt": "Restart this computer now? Unsaved work may be lost." },
+          { "name": "shutdown", "description": "Shut down the computer", "usage": "windows:power shutdown confirm", "targetTemplate": "power-shutdown", "arguments": [{ "name": "confirm" }], "confirmationPrompt": "Shut down this computer now? Unsaved work may be lost." },
+          { "name": "sign-out", "description": "Sign out of Windows", "usage": "windows:power sign-out confirm", "targetTemplate": "power-sign-out", "arguments": [{ "name": "confirm" }], "confirmationPrompt": "Sign out of Windows now? Unsaved work may be lost." }
         ]
       }
     ]
