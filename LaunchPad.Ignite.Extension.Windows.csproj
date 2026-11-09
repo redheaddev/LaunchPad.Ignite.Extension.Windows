@@ -9,12 +9,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="LaunchPad.Ignite.Extension.Windows.Tests\LaunchPad.Ignite.Extension.Windows.Tests.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="extension.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LaunchPad.Ignite\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj" />
+    <Compile Remove="LaunchPad.Ignite.Extension.Windows.Tests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LaunchPad.Ignite\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj" Condition="Exists('..\LaunchPad.Ignite\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj')" />
+    <ProjectReference Include="..\..\LaunchPad.Ignite.App\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj" Condition="!Exists('..\LaunchPad.Ignite\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj') and Exists('..\..\LaunchPad.Ignite.App\LaunchPad.Ignite.Core\LaunchPad.Ignite.Core.csproj')" />
   </ItemGroup>
 </Project>

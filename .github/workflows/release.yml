@@ -48,6 +48,9 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Run Windows extension tests
+        run: dotnet test LaunchPad.Ignite.Extension.Windows/LaunchPad.Ignite.Extension.Windows.Tests/LaunchPad.Ignite.Extension.Windows.Tests.csproj --configuration Release --verbosity minimal
+
       - name: Resolve package version
         id: version
         shell: pwsh
